@@ -53,6 +53,10 @@ public class Trail{
 		set{ this._Intensity = value; }
 		get{ return this._Intensity; }
 	}
+
+    public int getCountPoints() {
+        return _TrailPoints.Count;
+    }
 	/// <summary>
 	/// Gets or sets the trail points.
 	/// </summary>
