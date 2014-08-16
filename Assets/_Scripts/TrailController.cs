@@ -5,6 +5,9 @@ using System.Collections.Generic;
 public class TrailController : MonoBehaviour {
 
     public float PointsPerSeconds = 0.05f;                                  //Max TrailPoints per Second
+    public GameObject Terrain;
+    public Transform ParticleEffect;
+
     private float _NextAdd = 0.0f;                                         //Current Time for next add. If smaller than time, point is added
     private List<Trail> _ActiveTrails = new List<Trail>();                 //List with all active Trails
     private Trail _CurrentTrail = new Trail();
@@ -25,8 +28,8 @@ public class TrailController : MonoBehaviour {
                 RaycastHit hit;
                 Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
 
-                if (GameObject.FindGameObjectWithTag("Terrain").collider.Raycast (ray, out hit, Mathf.Infinity)) {
-                    Debug.Log(hit.transform.position);
+                if (Terrain.collider.Raycast(ray, out hit, Mathf.Infinity)) {
+                    Instantiate(ParticleEffect, hit.point, Quaternion.identity);
                     _CurrentTrail.addPoint(hit.point);
                     _NextAdd = Time.time + PointsPerSeconds;
                 }
@@ -36,7 +39,12 @@ public class TrailController : MonoBehaviour {
         if (Input.GetMouseButtonUp(0)) {
             //Release this Trail
             Debug.Log("Anzahl Punkte in " + _CurrentTrail.Name + ": " + _CurrentTrail.getCountPoints() + " nach " + (Time.time - _StartTime));
-            _CurrentTrail.showPath();
+
+            /*foreach (Vector3 Point in _CurrentTrail.getTrailPoints()) {
+                Debug.Log("showPath() of trail: " + _CurrentTrail.Name);
+                Instantiate(ParticleEffect, Point, Quaternion.identity);
+            }   */
+
             _CurrentTrail = new Trail();
         }
 	}

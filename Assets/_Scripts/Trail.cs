@@ -2,7 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 
-[SerializeField]
 public class Trail{
 	private int _Id = -1;
 	private string _Name = "Default Trail Name";
@@ -65,6 +64,9 @@ public class Trail{
 		set{ this._TrailPoints = value; }
 		get{ return this._TrailPoints; }
 	}*/
+    public List<Vector3> getTrailPoints() {
+        return this._TrailPoints;
+    }
 	#endregion
 
 	#region Functions
@@ -77,13 +79,6 @@ public class Trail{
 	#endregion
 
     #region Debug / Test
-    public void showPath() {
-
-        //create a sphere
-        foreach(Vector3 Point in this._TrailPoints){
-            GameObject Sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            Sphere.transform.position = Point;
-        }
-    }
+   
     #endregion
 }
