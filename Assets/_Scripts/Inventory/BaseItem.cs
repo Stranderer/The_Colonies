@@ -12,15 +12,6 @@ public class BaseItem {
 	private bool _stackable;
 	#endregion
 
-	#region enums
-	public enum ItemType {
-		Weapon,
-		Consumable,
-		Quest,
-		Ressource
-	}
-	#endregion
-
 	#region constructors
 	public BaseItem (int _itemId, string _itemName, string _itemDescr, int _itemValue, Texture2D _itemTexture, ItemType _itemType, bool _stackable)
 	{
