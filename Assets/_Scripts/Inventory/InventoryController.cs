@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.UI;
 
 public class InventoryController : MonoBehaviour {
 
@@ -11,9 +12,9 @@ public class InventoryController : MonoBehaviour {
 	public float _inventoryHeightPercentage = 50.0f;					//Height in percent of window
 	public float _inventoryWidthPercentage = 50.0f;					//Width in percent of window, atm equal to height for a square inventory
 
-	public Texture2D inventoryBackground;
-	public Texture2D slotBackground;
-	public Texture2D slotHighlighted;
+	public Sprite inventoryBackground;
+	public Sprite slotBackground;
+	public Sprite slotHighlighted;
 
 	public Canvas _Canvas;
 	#endregion
@@ -68,6 +69,7 @@ public class InventoryController : MonoBehaviour {
 			for(int x = 0; x < this.sizeX; x++){
 				//Create a new tile
 				Slot newTile = new Slot(counter++, "Slot " + counter, startPos, slotWidth);
+                newTile.getUIPanel().GetComponent<Image>().sprite = this.slotBackground;
 				this._Slots.Add(newTile);
 
 				//Set new Startpos
