@@ -6,11 +6,14 @@ using UnityEngine.UI;
 public class InventoryController : MonoBehaviour {
 
 	#region public vars
-	public int sizeX = 5;
-	public int sizeY = 5;
-	public Vector2 slotWidth = new Vector2(50.0f, 50.0f);
-	public float _inventoryHeightPercentage = 50.0f;					//Height in percent of window
-	public float _inventoryWidthPercentage = 50.0f;					//Width in percent of window, atm equal to height for a square inventory
+	public int slotsX = 5;
+	public int slotsY = 8;
+	public Vector2 slotSize = new Vector2(50.0f, 50.0f);
+	public float inventoryHeightPercentage = 50.0f;					//Height in percent of window
+	public float inventoryWidthPercentage = 50.0f;					//Width in percent of window, atm equal to height for a square inventory
+
+    public int slotMarginX = 10;
+    public int slotMarginY = 10;
 
 	public Sprite inventoryBackground;
 	public Sprite slotBackground;
@@ -47,6 +50,9 @@ public class InventoryController : MonoBehaviour {
 	
 	public void Start(){
 		Debug.Log("Start(): InventoryController");
+        
+        //Set inventory size according to settings
+        recalculateInventoryCanvas();
 
 		//inizialize inventory and build grid
 		buildGrid();
@@ -64,19 +70,19 @@ public class InventoryController : MonoBehaviour {
 	private void buildGrid(){
 		//Build from top left to bootom right
 		int counter = 0;
-		Vector2 startPos = new Vector2(20,-20);
-		for(int y = 0; y < this.sizeY; y++){
-			for(int x = 0; x < this.sizeX; x++){
+		Vector2 startPos = new Vector2(slotMarginX,-slotMarginY);
+		for(int y = 0; y < this.slotsY; y++){
+			for(int x = 0; x < this.slotsX; x++){
 				//Create a new tile
-				Slot newTile = new Slot(counter++, "Slot " + counter, startPos, slotWidth);
+				Slot newTile = new Slot(counter++, "Slot " + counter, startPos, slotSize);
                 newTile.getUIPanel().GetComponent<Image>().sprite = this.slotBackground;
 				this._Slots.Add(newTile);
 
 				//Set new Startpos
-				startPos.x = startPos.x + slotWidth.x + 20;
+				startPos.x = startPos.x + slotSize.x + slotMarginX;
 			}
-			startPos.x = 20;
-			startPos.y = startPos.y - slotWidth.y - 20;
+			startPos.x = slotMarginX;
+			startPos.y = startPos.y - slotSize.y - slotMarginY;
 		}
 	}
 
@@ -98,7 +104,7 @@ public class InventoryController : MonoBehaviour {
 	/// Debug this instance.
 	/// </summary>
 	public void debug(){
-		Debug.Log("This Inventory has a Grid of " + this.sizeX + " by " + this.sizeY + ". A total of " + this._Slots.Count + " Slots");
+		Debug.Log("This Inventory has a Grid of " + this.slotsX + " by " + this.slotsY + ". A total of " + this._Slots.Count + " Slots");
 	}
 	#endregion
 
@@ -120,10 +126,23 @@ public class InventoryController : MonoBehaviour {
 	private void addPanels(){
 		//Add the Panels
 		foreach(Slot slot in _Slots){
-			slot.getUIPanel().transform.parent = _Canvas.transform.Find("Background").transform;
+			slot.getUIPanel().transform.parent = _Canvas.transform.Find("Background/Content").transform;
 			slot.getUIPanel().GetComponent<RectTransform>().anchoredPosition = new Vector2(slot.getStartPos().x, slot.getStartPos().y);
 		}
 	}
+
+    public void recalculateInventoryCanvas(){
+        Vector2 rectDelta = new Vector2(0,0);
+    
+        //Calc Width
+        rectDelta.x = slotMarginX * (slotsX + 1) + slotSize.x * slotsX + _Canvas.transform.Find("Background/Scrollbar").GetComponent<RectTransform>().sizeDelta.x;
+        Debug.Log(_Canvas.transform.Find("Background/Scrollbar").GetComponent<RectTransform>().sizeDelta.x);
+        //Calc Height
+        rectDelta.y = slotMarginY * (slotsY + 1) + slotSize.y * slotsY;
+        //Resize Background
+        _Canvas.transform.Find("Background").GetComponent<RectTransform>().sizeDelta = rectDelta;
+
+    }
 
 	private void updateCanvas(){
 		//Add 
