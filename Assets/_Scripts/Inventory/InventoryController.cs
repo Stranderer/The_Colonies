@@ -126,17 +126,20 @@ public class InventoryController : MonoBehaviour {
 	private void addPanels(){
 		//Add the Panels
 		foreach(Slot slot in _Slots){
-			slot.getUIPanel().transform.parent = _Canvas.transform.Find("Background/Content").transform;
+			slot.getUIPanel().transform.parent = _Canvas.transform.Find("InventoryBackground/ContentMask/SlotContent/ScrollContent").transform;
 			slot.getUIPanel().GetComponent<RectTransform>().anchoredPosition = new Vector2(slot.getStartPos().x, slot.getStartPos().y);
 		}
 	}
 
     public void recalculateInventoryCanvas(){
-        Vector2 rectDelta = new Vector2(0,0);
+        
+		return;
+
+		Vector2 rectDelta = new Vector2(0,0);
     
         //Calc Width
-        rectDelta.x = slotMarginX * (slotsX + 1) + slotSize.x * slotsX + _Canvas.transform.Find("Background/Scrollbar").GetComponent<RectTransform>().sizeDelta.x;
-        Debug.Log(_Canvas.transform.Find("Background/Scrollbar").GetComponent<RectTransform>().sizeDelta.x);
+		rectDelta.x = slotMarginX * (slotsX + 1) + slotSize.x * slotsX + _Canvas.transform.Find("InventoryBackground/Scrollbar").GetComponent<RectTransform>().sizeDelta.x;
+		Debug.Log(_Canvas.transform.Find("InventoryBackground/Scrollbar").GetComponent<RectTransform>().sizeDelta.x);
         //Calc Height
         rectDelta.y = slotMarginY * (slotsY + 1) + slotSize.y * slotsY;
         //Resize Background
