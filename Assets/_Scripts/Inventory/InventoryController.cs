@@ -3,6 +3,11 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.UI;
 
+
+/// <summary>
+/// This implements a basic inventory with drag and drop functionality. 
+/// The InventoryController can be added to every GameObject and provides it with a simple Inventory.
+/// </summary>
 public class InventoryController : MonoBehaviour {
 
 	#region public vars
@@ -18,8 +23,9 @@ public class InventoryController : MonoBehaviour {
 	public Sprite inventoryBackground;
 	public Sprite slotBackground;
 	public Sprite slotHighlighted;
-
-	public Canvas _Canvas;
+    
+	private GameObject _CanvasContainer;
+	private GameObject _Canvas;
 	#endregion
 
 	#region private vars
@@ -51,6 +57,9 @@ public class InventoryController : MonoBehaviour {
 	public void Start(){
 		Debug.Log("Start(): InventoryController");
         
+		createInventoryCanvas(this.inventoryWidthPercentage, this.inventoryHeightPercentage);
+
+		/*
         //Set inventory size according to settings
         recalculateInventoryCanvas();
 
@@ -59,7 +68,7 @@ public class InventoryController : MonoBehaviour {
 
 		//Add Panels once to inventory
 		addPanels();
-
+		*/
 		debug();
 	}
 
@@ -110,7 +119,10 @@ public class InventoryController : MonoBehaviour {
 
 	#region canvas methods
 	private void toogleCanvas(bool visible){
-		this._Canvas.enabled = visible;
+
+		return;
+
+		this._Canvas.GetComponent<Canvas>().enabled = visible;
 
 		//if canvas is visible lock mousemove
 		MouseLook[] mouseLookScripts = gameObject.GetComponentsInChildren<MouseLook>();
@@ -129,6 +141,184 @@ public class InventoryController : MonoBehaviour {
 			slot.getUIPanel().transform.parent = _Canvas.transform.Find("InventoryBackground/ContentMask/SlotContent/ScrollContent").transform;
 			slot.getUIPanel().GetComponent<RectTransform>().anchoredPosition = new Vector2(slot.getStartPos().x, slot.getStartPos().y);
 		}
+	}
+
+	/// <summary>
+	/// Creates the inventory canvas.
+	/// </summary>
+	/// <param name="width">
+	/// Defines the width of the inventory in percent.
+	/// </param>
+	public void createInventoryCanvas(float width, float height){
+		Debug.Log("createInventoryCanvas()");
+
+		//create canvascontainer
+		this._CanvasContainer = new GameObject("InventoryCanvasContainer");
+		this._CanvasContainer.layer = 5;
+
+		//create canvas
+		this._Canvas = new GameObject("BaseCanvas");
+		this._Canvas.layer = 5;
+		this._Canvas.transform.parent = this._CanvasContainer.transform;
+		this._Canvas.AddComponent<Canvas>();
+		this._Canvas.AddComponent<GraphicRaycaster>();
+
+		//Set Viewport
+		this._Canvas.GetComponent<Canvas>().renderMode = new RenderMode();
+
+		//Create Background
+		GameObject background = new GameObject("InventoryBackground");
+		background.transform.parent = this._Canvas.transform;
+		background.layer = 5;
+		background.AddComponent<RectTransform>();
+		background.AddComponent<CanvasRenderer>();
+		background.AddComponent<Image>();
+
+		//Create Slotcontent
+		GameObject slotContent = new GameObject("SlotContent");
+		slotContent.transform.parent = background.transform;
+		slotContent.layer = 5;
+		slotContent.AddComponent<Image>();
+		slotContent.AddComponent<ScrollRect>();
+		slotContent.AddComponent<Mask>();
+
+		//Create ScrollContent
+		GameObject scrollContent = new GameObject("ScrollContent");
+		scrollContent.transform.parent = slotContent.transform;
+		scrollContent.layer = 5;
+		scrollContent.AddComponent<Image>();
+
+		//Create scrollbar
+		GameObject scrollBar = createSlider("ScrollBar", slotContent, 5);
+
+		//Configure Background
+		background.GetComponent<Image>().sprite = this.inventoryBackground;
+		//Position x-Right / y-Center of screen
+		background.GetComponent<RectTransform>().anchorMin = new Vector2(1f,0.5f);
+		background.GetComponent<RectTransform>().anchorMax = new Vector2(1f,0.5f);
+		//Calculate background size
+		background.GetComponent<RectTransform>().sizeDelta = calculateInventoryCanvasSize();
+		//Move 200px to left
+		background.GetComponent<RectTransform>().anchoredPosition = new Vector2(-200f, 0);
+
+		//Configure SlotContent
+		slotContent.GetComponent<RectTransform>().sizeDelta = new Vector2(
+			this._Canvas.transform.Find("InventoryBackground").GetComponent<RectTransform>().sizeDelta.x - 30,
+			this._Canvas.transform.Find("InventoryBackground").GetComponent<RectTransform>().sizeDelta.y -30
+		);
+
+		//Configure ScrollRect
+		slotContent.GetComponent<ScrollRect>().horizontal = false;
+		slotContent.GetComponent<ScrollRect>().vertical = true;
+		slotContent.GetComponent<ScrollRect>().content = scrollContent.GetComponent<RectTransform>();
+
+		//Configure ScrollContent
+		scrollContent.GetComponent<Image>().color = new Color(0.1f,0.1f,0.1f,0.5f);
+		scrollContent.GetComponent<RectTransform>().sizeDelta = new Vector2(
+			this._Canvas.transform.Find("InventoryBackground").GetComponent<RectTransform>().sizeDelta.x - 30,
+			600.0f
+		);
+
+		//Configure ScrollBar
+
+	}
+
+	/// <summary>
+	/// Creates the slider.
+	/// </summary>
+	/// <returns>The slider.</returns>
+	/// <param name="name">Name.</param>
+	/// <param name="parent">Parent.</param>
+	/// <param name="targetLayer">Target layer.</param>
+	public GameObject createSlider(string name, GameObject parent, int targetLayer){
+
+		//Create Slider GameObject
+		GameObject slider = new GameObject(name);
+		slider.transform.parent = parent.transform;
+		slider.layer = targetLayer;
+		slider.AddComponent<Image>();
+		slider.AddComponent<Slider>();
+
+		slider.GetComponent<Image>().sprite = Resources.Load<Sprite>("Background");
+
+		//Create FillArea
+		GameObject fillArea = new GameObject("FillArea");
+		fillArea.transform.parent = slider.transform;
+		fillArea.AddComponent<RectTransform>();
+
+		//Create Fill
+		GameObject fill = new GameObject("Fill");
+		fill.transform.parent = fillArea.transform;
+		fill.AddComponent<Image>();
+		fill.GetComponent<Image>().sprite =  Resources.Load<Sprite>("GUISprite");
+		fill.GetComponent<Image>().color = new Color(0,0,0,0); //invisible
+
+		//Create Handle Area
+		GameObject handleArea = new GameObject("HandleArea");
+		handleArea.transform.parent = slider.transform;
+		handleArea.AddComponent<RectTransform>();
+
+		//Create Handle
+		GameObject handle = new GameObject("Handle");
+		handle.transform.parent = handleArea.transform;
+		handle.AddComponent<Image>();
+		handle.GetComponent<Image>().sprite =  Resources.Load<Sprite>("GUISprite");
+		handle.GetComponent<Image>().color = new Color(0.9f,0.9f,0.9f, 0.9f);
+
+		//Set overall deltaSize of slider
+		slider.GetComponent<RectTransform>().sizeDelta = new Vector2(30.0f, 300.0f);
+		
+		//Add Rects to slider
+		slider.GetComponent<Slider>().fillRect = fill.GetComponent<RectTransform>();
+		slider.GetComponent<Slider>().handleRect = handle.GetComponent<RectTransform>();
+
+
+		//Configure Fill and handles
+		//FillArea
+		fillArea.GetComponent<RectTransform>().anchorMin = new Vector2(0, 0);
+		fillArea.GetComponent<RectTransform>().anchorMax = new Vector2(1.0f, 1.0f);
+		fillArea.GetComponent<RectTransform>().sizeDelta = new Vector2(10.0f, 5.0f);
+		fillArea.GetComponent<RectTransform>().localPosition = new Vector3(10.0f, 5.0f, 0);
+
+		//HandleArea
+		handleArea.GetComponent<RectTransform>().anchorMin = new Vector2(0, 0);
+		handleArea.GetComponent<RectTransform>().anchorMax = new Vector2(1.0f, 1.0f);
+		handleArea.GetComponent<RectTransform>().sizeDelta = new Vector2(10.0f, 10.0f);
+		handleArea.GetComponent<RectTransform>().localPosition = new Vector3(10.0f, 10.0f, 0);
+
+		//Fill
+		fill.GetComponent<RectTransform>().anchorMin = new Vector2(0, 1.0f);
+		fill.GetComponent<RectTransform>().anchorMax = new Vector2(1.0f, 1.0f);
+		fill.GetComponent<RectTransform>().sizeDelta = new Vector2(10.0f, 0.0f);
+		fill.GetComponent<RectTransform>().localPosition = new Vector3(0.0f, 0.0f, 0.0f);
+
+		//Handle
+		handle.GetComponent<RectTransform>().anchorMin = new Vector2(0, 1.0f);
+		handle.GetComponent<RectTransform>().anchorMax = new Vector2(1.0f, 1.0f);
+		handle.GetComponent<RectTransform>().sizeDelta = new Vector2(10.0f, 0.0f);
+		handle.GetComponent<RectTransform>().localPosition = new Vector3(0.0f, 0.0f, 0.0f);
+
+
+		//Configure Slider
+		slider.GetComponent<Slider>().direction = Slider.Direction.TopToBottom;
+		slider.GetComponent<Image>().color = new Color(0.5f,0.5f,0.5f,0.5f);
+
+		return slider;
+	}
+
+	/// <summary>
+	/// Calculates the size of the inventory canvas.
+	/// </summary>
+	/// <returns>The inventory canvas size.</returns>
+	public Vector2 calculateInventoryCanvasSize(){
+		Vector2 rectDelta = new Vector2(0,0);
+
+		//X
+		rectDelta.x = slotMarginX * (slotsX + 1) + slotSize.x * slotsX;
+		//Y
+		rectDelta.y = slotMarginY * (slotsY + 1) + slotSize.y * slotsY;
+
+		return rectDelta;
 	}
 
     public void recalculateInventoryCanvas(){
