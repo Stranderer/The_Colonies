@@ -11,27 +11,29 @@ using UnityEngine.UI;
 public class InventoryController : MonoBehaviour {
 
 	#region public vars
-	public int slotsX = 5;
-	public int slotsY = 8;
-	public Vector2 slotSize = new Vector2(50.0f, 50.0f);
+	public int slotsX = 5;											//Initiate slot count in x
+	public int slotsY = 8;											//Initiate slot count in y
+	public Vector2 slotSize = new Vector2(50.0f, 50.0f);			//Size of each slot
 	public float inventoryHeightPercentage = 50.0f;					//Height in percent of window
 	public float inventoryWidthPercentage = 50.0f;					//Width in percent of window, atm equal to height for a square inventory
 
-    public int slotMarginX = 10;
-    public int slotMarginY = 10;
+    public int slotMarginX = 10;									//Margin between slots in x
+    public int slotMarginY = 10;									//Margin between slots in y
 
-	public Sprite inventoryBackground;
-	public Sprite slotBackground;
-	public Sprite slotHighlighted;
+	public Sprite inventoryBackground;								//Sprite for InventoryBackground
+	public Sprite slotBackground;									//Sprite for SlotBackground
+	public Sprite slotHighlighted;									//Sprite for Slots on hover or active
     
-	private GameObject _CanvasContainer;
-	private GameObject _Canvas;
+	public GameObject slotPrefapp;									//Prefapp for a basic slot
+
+	private GameObject _CanvasContainer;							//Holds the inventory root-canvas
+	private GameObject _Canvas;										//Holds the actual inventory-canvas
 	#endregion
 
 	#region private vars
 	private bool _visible; 							//can inventory be seen on screen
-	private List<Slot> _Slots = new List<Slot>();
-	private List<BaseItem> _Items = new List<BaseItem>();
+	private List<GameObject> _Slots = new List<GameObject>();
+	private List<GameObject> _Items = new List<GameObject>();
 	#endregion
 
 	#region getter
@@ -57,34 +59,47 @@ public class InventoryController : MonoBehaviour {
 	public void Start(){
 		Debug.Log("Start(): InventoryController");
         
+		//Create inventory canvas
 		createInventoryCanvas(this.inventoryWidthPercentage, this.inventoryHeightPercentage);
 
-		/*
-        //Set inventory size according to settings
-        recalculateInventoryCanvas();
-
-		//inizialize inventory and build grid
-		buildGrid();
+		//inizialize slots and build grid
+		initializeSlotGrid();
 
 		//Add Panels once to inventory
 		addPanels();
-		*/
+
 		debug();
+	}
+
+	void Update(){
+		if(Input.GetKeyDown(KeyCode.I))
+			this.toogleInventory();
+		
+		//only update inventory if visible
+		if(this._visible)
+			this.updateCanvas();
+		
+		
+		//Show / hide canvas
+		this.toogleCanvas(this._visible);
+		
 	}
 
 	#region methods
 	/// <summary>
-	/// Builds the grid.
+	/// Initializes the slots and build up the grid.
 	/// </summary>
-	private void buildGrid(){
+	private void initializeSlotGrid(){
 		//Build from top left to bootom right
 		int counter = 0;
 		Vector2 startPos = new Vector2(slotMarginX,-slotMarginY);
 		for(int y = 0; y < this.slotsY; y++){
 			for(int x = 0; x < this.slotsX; x++){
-				//Create a new tile
-				Slot newTile = new Slot(counter++, "Slot " + counter, startPos, slotSize);
-                newTile.getUIPanel().GetComponent<Image>().sprite = this.slotBackground;
+				//Instanciate a new tile
+				GameObject newTile = (GameObject)Instantiate(this.slotPrefapp, new Vector3(0,0,0), Quaternion.identity);
+
+				newTile.GetComponent<Slot>().init(counter++, "Slot " + counter, startPos, slotSize);
+                newTile.GetComponent<Slot>().GetComponent<Image>().sprite = this.slotBackground;
 				this._Slots.Add(newTile);
 
 				//Set new Startpos
@@ -95,17 +110,33 @@ public class InventoryController : MonoBehaviour {
 		}
 	}
 
-	void Update(){
-		if(Input.GetKeyDown(KeyCode.I))
-			this.toogleInventory();
+	/// <summary>
+	/// Adds an item to the inventory.
+	/// </summary>
+	/// <param name="item">Item to add</param>
+	public void addItem(GameObject item){
 
-		//only update inventory if visible
-		if(this._visible)
-			this.updateCanvas();
-		
+	}
+	/// <summary>
+	/// Adds multible Items to inventory.
+	/// </summary>
+	/// <param name="items">Items to add</param>
+	public void addItem(List<GameObject> items){
 
-		//Show / hide canvas
-		this.toogleCanvas(this._visible);
+		//Search a free slot for each iten
+		foreach(GameObject slot in _Slots){
+
+			if(items.Count == 0)
+				break;
+
+			if(!slot.GetComponent<Slot>().isFree())
+				continue;
+
+			//Add item
+			slot.GetComponent<Slot>().setItem(items[0]);
+			//slot.getUIPanel().GetComponent<Image>().sprite = items[0].getTexture();
+			items.RemoveAt(0);
+		}
 
 	}
 
@@ -119,8 +150,6 @@ public class InventoryController : MonoBehaviour {
 
 	#region canvas methods
 	private void toogleCanvas(bool visible){
-
-		return;
 
 		this._Canvas.GetComponent<Canvas>().enabled = visible;
 
@@ -137,18 +166,17 @@ public class InventoryController : MonoBehaviour {
 
 	private void addPanels(){
 		//Add the Panels
-		foreach(Slot slot in _Slots){
-			slot.getUIPanel().transform.parent = _Canvas.transform.Find("InventoryBackground/ContentMask/SlotContent/ScrollContent").transform;
-			slot.getUIPanel().GetComponent<RectTransform>().anchoredPosition = new Vector2(slot.getStartPos().x, slot.getStartPos().y);
+		foreach(GameObject slot in _Slots){
+			slot.GetComponent<Slot>().transform.parent = _Canvas.transform.Find("InventoryBackground/SlotContent/ScrollContent").transform;
+			slot.GetComponent<Slot>().GetComponent<RectTransform>().anchoredPosition = new Vector2(slot.GetComponent<Slot>().getStartPos().x, slot.GetComponent<Slot>().getStartPos().y);
 		}
 	}
 
 	/// <summary>
 	/// Creates the inventory canvas.
 	/// </summary>
-	/// <param name="width">
-	/// Defines the width of the inventory in percent.
-	/// </param>
+	/// <param name="width">Width of the new inventory</param>
+	/// <param name="height">Height of the new inventory</param>
 	public void createInventoryCanvas(float width, float height){
 		Debug.Log("createInventoryCanvas()");
 
@@ -157,7 +185,7 @@ public class InventoryController : MonoBehaviour {
 		this._CanvasContainer.layer = 5;
 
 		//create canvas
-		this._Canvas = new GameObject("BaseCanvas");
+		this._Canvas = new GameObject("Canvas");
 		this._Canvas.layer = 5;
 		this._Canvas.transform.parent = this._CanvasContainer.transform;
 		this._Canvas.AddComponent<Canvas>();
@@ -189,7 +217,15 @@ public class InventoryController : MonoBehaviour {
 		scrollContent.AddComponent<Image>();
 
 		//Create scrollbar
-		GameObject scrollBar = createSlider("ScrollBar", slotContent, 5);
+		//TODO: create a working Scrollbar from script
+		//GameObject scrollBar = createSlider("ScrollBar", slotContent, 5);
+
+		//Create Info panel
+		GameObject infoPanel = new GameObject("InfoPanel");
+		infoPanel.transform.parent = this._Canvas.transform;
+		infoPanel.layer = 5;
+		infoPanel.AddComponent<RectTransform>();
+		infoPanel.AddComponent<Image>();
 
 		//Configure Background
 		background.GetComponent<Image>().sprite = this.inventoryBackground;
@@ -199,28 +235,34 @@ public class InventoryController : MonoBehaviour {
 		//Calculate background size
 		background.GetComponent<RectTransform>().sizeDelta = calculateInventoryCanvasSize();
 		//Move 200px to left
-		background.GetComponent<RectTransform>().anchoredPosition = new Vector2(-200f, 0);
+		background.GetComponent<RectTransform>().anchoredPosition = new Vector2(-1 * ((background.GetComponent<RectTransform>().sizeDelta.x / 2) + 20), 0);
 
 		//Configure SlotContent
 		slotContent.GetComponent<RectTransform>().sizeDelta = new Vector2(
-			this._Canvas.transform.Find("InventoryBackground").GetComponent<RectTransform>().sizeDelta.x - 30,
-			this._Canvas.transform.Find("InventoryBackground").GetComponent<RectTransform>().sizeDelta.y -30
+			this._Canvas.transform.Find("InventoryBackground").GetComponent<RectTransform>().sizeDelta.x - 20,
+			this._Canvas.transform.Find("InventoryBackground").GetComponent<RectTransform>().sizeDelta.y - 20
 		);
 
 		//Configure ScrollRect
 		slotContent.GetComponent<ScrollRect>().horizontal = false;
 		slotContent.GetComponent<ScrollRect>().vertical = true;
+		slotContent.GetComponent<ScrollRect>().movementType = ScrollRect.MovementType.Clamped;
 		slotContent.GetComponent<ScrollRect>().content = scrollContent.GetComponent<RectTransform>();
 
 		//Configure ScrollContent
 		scrollContent.GetComponent<Image>().color = new Color(0.1f,0.1f,0.1f,0.5f);
 		scrollContent.GetComponent<RectTransform>().sizeDelta = new Vector2(
-			this._Canvas.transform.Find("InventoryBackground").GetComponent<RectTransform>().sizeDelta.x - 30,
+			this._Canvas.transform.Find("InventoryBackground").GetComponent<RectTransform>().sizeDelta.x - 20,
 			600.0f
 		);
+		scrollContent.GetComponent<RectTransform>().anchorMin = new Vector2(0.5f,1.0f);
+		scrollContent.GetComponent<RectTransform>().anchorMax = new Vector2(0.5f,1.0f);
+		scrollContent.GetComponent<RectTransform>().pivot = new Vector2(0.5f, 1.0f);
+		scrollContent.GetComponent<RectTransform>().anchoredPosition = new Vector2(0.0f, 0.0f);
 
-		//Configure ScrollBar
-
+		//Configure InfoPanel
+		infoPanel.GetComponent<Image>().sprite = this.inventoryBackground;
+		infoPanel.SetActive(false);
 	}
 
 	/// <summary>
@@ -314,28 +356,14 @@ public class InventoryController : MonoBehaviour {
 		Vector2 rectDelta = new Vector2(0,0);
 
 		//X
-		rectDelta.x = slotMarginX * (slotsX + 1) + slotSize.x * slotsX;
+		rectDelta.x = slotMarginX * (slotsX + 1) + slotSize.x * slotsX + 20;
 		//Y
 		rectDelta.y = slotMarginY * (slotsY + 1) + slotSize.y * slotsY;
 
+		Debug.Log(rectDelta);
+
 		return rectDelta;
 	}
-
-    public void recalculateInventoryCanvas(){
-        
-		return;
-
-		Vector2 rectDelta = new Vector2(0,0);
-    
-        //Calc Width
-		rectDelta.x = slotMarginX * (slotsX + 1) + slotSize.x * slotsX + _Canvas.transform.Find("InventoryBackground/Scrollbar").GetComponent<RectTransform>().sizeDelta.x;
-		Debug.Log(_Canvas.transform.Find("InventoryBackground/Scrollbar").GetComponent<RectTransform>().sizeDelta.x);
-        //Calc Height
-        rectDelta.y = slotMarginY * (slotsY + 1) + slotSize.y * slotsY;
-        //Resize Background
-        _Canvas.transform.Find("Background").GetComponent<RectTransform>().sizeDelta = rectDelta;
-
-    }
 
 	private void updateCanvas(){
 		//Add 
