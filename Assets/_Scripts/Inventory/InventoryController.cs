@@ -28,6 +28,7 @@ public class InventoryController : MonoBehaviour {
 
 	private GameObject _CanvasContainer;							//Holds the inventory root-canvas
 	private GameObject _Canvas;										//Holds the actual inventory-canvas
+	private GameObject _InfoPanel;									//Holds the info panel for hover infos
 	#endregion
 
 	#region private vars
@@ -98,7 +99,7 @@ public class InventoryController : MonoBehaviour {
 				//Instanciate a new tile
 				GameObject newTile = (GameObject)Instantiate(this.slotPrefapp, new Vector3(0,0,0), Quaternion.identity);
 
-				newTile.GetComponent<Slot>().init(counter++, "Slot " + counter, startPos, slotSize);
+				newTile.GetComponent<Slot>().init(counter++, "Slot " + counter, startPos, slotSize, _InfoPanel);
                 newTile.GetComponent<Slot>().GetComponent<Image>().sprite = this.slotBackground;
 				this._Slots.Add(newTile);
 
@@ -202,6 +203,7 @@ public class InventoryController : MonoBehaviour {
 		background.AddComponent<CanvasRenderer>();
 		background.AddComponent<Image>();
 
+
 		//Create Slotcontent
 		GameObject slotContent = new GameObject("SlotContent");
 		slotContent.transform.parent = background.transform;
@@ -221,11 +223,19 @@ public class InventoryController : MonoBehaviour {
 		//GameObject scrollBar = createSlider("ScrollBar", slotContent, 5);
 
 		//Create Info panel
-		GameObject infoPanel = new GameObject("InfoPanel");
-		infoPanel.transform.parent = this._Canvas.transform;
-		infoPanel.layer = 5;
-		infoPanel.AddComponent<RectTransform>();
-		infoPanel.AddComponent<Image>();
+		this._InfoPanel = new GameObject("InfoPanel");
+		this._InfoPanel.transform.parent = this._Canvas.transform;
+		this._InfoPanel.layer = 5;
+		this._InfoPanel.AddComponent<RectTransform>();
+		this._InfoPanel.AddComponent<TextResizer>();
+		this._InfoPanel.AddComponent<Image>();
+		//Add infopanel text gameobject
+		GameObject InfoPanelText = new GameObject("Text");
+		InfoPanelText.transform.parent = this._InfoPanel.transform;
+		InfoPanelText.layer = 5;
+		InfoPanelText.AddComponent<RectTransform>();
+		InfoPanelText.AddComponent<Text>();
+
 
 		//Configure Background
 		background.GetComponent<Image>().sprite = this.inventoryBackground;
@@ -261,8 +271,23 @@ public class InventoryController : MonoBehaviour {
 		scrollContent.GetComponent<RectTransform>().anchoredPosition = new Vector2(0.0f, 0.0f);
 
 		//Configure InfoPanel
-		infoPanel.GetComponent<Image>().sprite = this.inventoryBackground;
-		infoPanel.SetActive(false);
+		RectTransform backgroundRect = background.GetComponent<RectTransform>();
+		this._InfoPanel.GetComponent<Image>().sprite = this.inventoryBackground;
+		this._InfoPanel.GetComponent<RectTransform>().anchorMin = new Vector2(1f,0.5f);
+		this._InfoPanel.GetComponent<RectTransform>().anchorMax = new Vector2(1f,0.5f);
+		this._InfoPanel.GetComponent<RectTransform>().sizeDelta = new Vector2(backgroundRect.sizeDelta.x, backgroundRect.sizeDelta.y / 3);
+		this._InfoPanel.GetComponent<RectTransform>().anchoredPosition = new Vector2(backgroundRect.anchoredPosition.x - backgroundRect.sizeDelta.x, backgroundRect.anchoredPosition.y + (backgroundRect.anchoredPosition.y - this._InfoPanel.GetComponent<RectTransform>().sizeDelta.y));
+		//this._InfoPanel.SetActive(false); //hide per default
+
+		//Configure InfoPanelText
+		InfoPanelText.GetComponent<RectTransform>().sizeDelta = new Vector2(this._InfoPanel.GetComponent<RectTransform>().sizeDelta.x - 40, this._InfoPanel.GetComponent<RectTransform>().sizeDelta.y - 40);
+		Font infoFont = (Font)Resources.Load("Fonts/arial");
+		if(infoFont == null){
+			Debug.Log("Font not found!");
+			return;
+		}
+		InfoPanelText.GetComponent<Text>().font = infoFont;
+		InfoPanelText.GetComponent<Text>().color = Color.black;
 	}
 
 	/// <summary>

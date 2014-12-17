@@ -10,15 +10,17 @@ public class Slot : MonoBehaviour{
 	private Vector2 _slotSizeDelta;
 	private GameObject _UIPanel;
 	private GameObject _occupyingItem;
+	private GameObject _InfoPanel; 			//InfoPanel Reference
 	#endregion
 
 	#region initialisation
-	public void init(int slotId, string slotName, Vector2 slotStartPos, Vector2 slotSizeDelta)
+	public void init(int slotId, string slotName, Vector2 slotStartPos, Vector2 slotSizeDelta, GameObject infoPanel)
 	{
 		this._slotId = slotId;
 		this._slotName = transform.name = slotName;
 		this._slotStartPos = slotStartPos;
 		this._slotSizeDelta = slotSizeDelta;
+		this._InfoPanel = infoPanel;
 
 		resetSize();
 		resetPosition();
@@ -105,11 +107,34 @@ public class Slot : MonoBehaviour{
 		if(this.isFree())
 			return;
 
+		//Add Text to InfoPanel
+		Text panelText = _InfoPanel.transform.FindChild("Text").GetComponent<Text>();
+		panelText.text = "";
+
+		BaseItem item = _occupyingItem.GetComponent<BaseItem>();
+		string ln = System.Environment.NewLine;
+
+		string infoText = "";
+		infoText += "Item ID: " + item.getId() + ln;
+		infoText += "Item Name: " + item.getName() + ln;
+		infoText += "Item Value: " + item.getValue() + ln;
+		infoText += "Item Beschreibung: " + item.getDescription() + ln;
+		infoText += "Item Type: " + item.getType() + ln;
+		infoText += "Item isStackable: " + item.isStackable() + ln;
+
+		panelText.text = infoText;
+
+		//Resize infopanel TODO: If infopanel should be resizeable use this
+		//_InfoPanel.GetComponent<TextResizer>().resize(new Vector2(-1.0f, 0.0f));
+
+		//Show info
+		//_InfoPanel.SetActive(true);
 	}
 
 	public void hideStats(){
-		if(this.isFree())
-			return;
+		//Clear window and hide it
+		_InfoPanel.transform.FindChild("Text").GetComponent<Text>().text = "";
+		//_InfoPanel.SetActive(false);
 	}
 
 	public bool isFree(){

@@ -14,11 +14,31 @@ public class InventoryTestMotor : MonoBehaviour {
 		InventoryController myInventory = transform.GetComponent<InventoryController>();
 
 		//Create some test items
-		GameObject item1 = new GameObject("item1");
-		item1.AddComponent<BaseItem>();
-		item1.GetComponent<BaseItem>().init(0, "Schwert", "Ein einfaches Schwert", 150, _itemSprites[0], ItemType.Weapon, false);
-		_BaseItems.Add(item1);
+		GameObject item;
 
+		ItemType[] types = new ItemType[2];
+		types[0] = ItemType.Weapon;
+		types[1] = ItemType.Wearable;
+		string[] typeNames = new string[2];
+		typeNames[0] = "Schwert";
+		typeNames[1] = "Rüstung";
+		string[] typeDescr = new string[5];
+		typeDescr[0] = "Eine kurze Beschreibung.";
+		typeDescr[1] = "Eine normal lange Beschreibung mit einem Detail.";
+		typeDescr[2] = "Eine ziemlich lange Beschreibung mit mehreren Details, welche nicht weiter beschrieben werden.";
+		typeDescr[3] = "Eine lange Beschreibung mit vielen Details, welche alle genau und ausführlich beschreiben werden. Daher reicht hier ein einnzelner Satz nicht. So, dies sollte genug sein.";
+		typeDescr[4] = "Eine richtig lange und ausgedehnte Beschreibung mit extrem vielen Details, welche zu allem überfluss noch Zeilenummbrüche enthält." + System.Environment.NewLine + "Nach so einem Umbruch kann man noch lange weiter schreiben, aber ich lasse das jetz mal sein. Wäre ja auch ganz schön langweilig, so ein langer nichts sagender Text.";
+
+
+		for(int i = 0; i < Random.Range (1, 31); i++){
+
+			int randType = Random.Range(0,2);
+
+			item = new GameObject("Item " + i);
+			item.AddComponent<BaseItem>();
+			item.GetComponent<BaseItem>().init(i, typeNames[randType], typeDescr[Random.Range(0,5)], Random.Range(50,251), _itemSprites[randType], types[randType], false);
+			_BaseItems.Add(item);
+		}
 
 		/*
 		this._BaseItems.Add(new BaseItem(1, "Schwert", "Ein etwas besseres Schwert", 200, _itemSprites[0], ItemType.Weapon, false));
