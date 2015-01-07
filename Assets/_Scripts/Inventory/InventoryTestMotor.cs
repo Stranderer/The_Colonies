@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -35,8 +35,8 @@ public class InventoryTestMotor : MonoBehaviour {
 			int randType = Random.Range(0,2);
 
 			item = new GameObject("Item " + i);
-			item.AddComponent<BaseItem>();
-			item.GetComponent<BaseItem>().init(i, typeNames[randType], typeDescr[Random.Range(0,5)], Random.Range(50,251), _itemSprites[randType], types[randType], false);
+			item.AddComponent<Item>();
+			item.GetComponent<Item>().init(i, typeNames[randType], typeDescr[Random.Range(0,5)], Random.Range(50,251), _itemSprites[randType], types[randType], false);
 			_BaseItems.Add(item);
 		}
 

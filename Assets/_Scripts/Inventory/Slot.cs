@@ -1,8 +1,9 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
-public class Slot : MonoBehaviour{
+public class Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler{
 	#region private vars
 	private int _slotId;
 	private string _slotName;
@@ -24,21 +25,6 @@ public class Slot : MonoBehaviour{
 
 		resetSize();
 		resetPosition();
-/*
-		_UIPanel = new GameObject(this._slotName);
-		_UIPanel.AddComponent<RectTransform>();
-		_UIPanel.AddComponent<CanvasRenderer>();
-		_UIPanel.AddComponent<Image>();
-
-		//Add Values to components
-		RectTransform rect = _UIPanel.GetComponent<RectTransform>();
-
-		rect.anchorMin = new Vector2(0.0f, 1.0f);
-		rect.anchorMax = new Vector2(0.0f, 1.0f);
-		rect.pivot = new Vector2(0.0f, 1.0f);
-
-		rect.anchoredPosition = new Vector2(_slotStartPos.x, _slotStartPos.y);
-		rect.sizeDelta = _slotSizeDelta;*/
 	}
 	#endregion
 
@@ -82,20 +68,30 @@ public class Slot : MonoBehaviour{
 	public bool setItem(GameObject newItem){
 
 		//Is this an item
-		if(newItem.GetComponent<BaseItem>() == null)
+		if(newItem.GetComponent<Item>() == null)
 			return false;
 
 		this._occupyingItem = newItem;
 		//Set parent of item gameobject
-		this._occupyingItem.transform.parent = transform;
-		this._occupyingItem.GetComponent<BaseItem>().setUIPosition(new Vector2(0,0));
-		this._occupyingItem.GetComponent<BaseItem>().setUISize(new Vector2(this._slotSizeDelta.x -10.0f, this._slotSizeDelta.y - 10.0f));
+		this._occupyingItem.GetComponent<Item>().setParentTransform(transform);
+		this._occupyingItem.GetComponent<Item>().setUIPosition(new Vector2(0,0));
+		this._occupyingItem.GetComponent<Item>().setUISize(new Vector2(this._slotSizeDelta.x -10.0f, this._slotSizeDelta.y - 10.0f));
 
 		return true;
 	}
 	#endregion
 
 	#region methods
+	
+	void IPointerEnterHandler.OnPointerEnter(PointerEventData eventData){
+		highlight();
+		showStats();
+	}
+	void IPointerExitHandler.OnPointerExit(PointerEventData eventData){
+		highlight();
+		hideStats();
+	}
+
 	public void highlight(){
 		if(GetComponent<Image>().color == Color.white)
 			GetComponent<Image>().color = new Color(0.9f,0.9f,0.9f);
@@ -111,7 +107,7 @@ public class Slot : MonoBehaviour{
 		Text panelText = _InfoPanel.transform.FindChild("Text").GetComponent<Text>();
 		panelText.text = "";
 
-		BaseItem item = _occupyingItem.GetComponent<BaseItem>();
+		Item item = _occupyingItem.GetComponent<Item>();
 		string ln = System.Environment.NewLine;
 
 		string infoText = "";

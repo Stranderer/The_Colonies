@@ -97,7 +97,9 @@ public class InventoryController : MonoBehaviour {
 		for(int y = 0; y < this.slotsY; y++){
 			for(int x = 0; x < this.slotsX; x++){
 				//Instanciate a new tile
-				GameObject newTile = (GameObject)Instantiate(this.slotPrefapp, new Vector3(0,0,0), Quaternion.identity);
+				//GameObject newTile = (GameObject)Instantiate(this.slotPrefapp, new Vector3(0,0,0), Quaternion.identity);
+
+				GameObject newTile = createSlot();
 
 				newTile.GetComponent<Slot>().init(counter++, "Slot " + counter, startPos, slotSize, _InfoPanel);
                 newTile.GetComponent<Slot>().GetComponent<Image>().sprite = this.slotBackground;
@@ -371,6 +373,24 @@ public class InventoryController : MonoBehaviour {
 		slider.GetComponent<Image>().color = new Color(0.5f,0.5f,0.5f,0.5f);
 
 		return slider;
+	}
+
+	public GameObject createSlot(){
+
+		GameObject newPanel = new GameObject();
+		newPanel.AddComponent<RectTransform>();
+		newPanel.AddComponent<CanvasRenderer>();
+		newPanel.AddComponent<Image>();
+		newPanel.AddComponent<Slot>();
+
+		//Add Values to components
+		RectTransform rect = newPanel.GetComponent<RectTransform>();
+
+		rect.anchorMin = new Vector2(0.0f, 1.0f);
+		rect.anchorMax = new Vector2(0.0f, 1.0f);
+		rect.pivot = new Vector2(0.0f, 1.0f);
+
+		return newPanel;
 	}
 
 	/// <summary>

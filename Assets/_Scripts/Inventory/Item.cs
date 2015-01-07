@@ -3,15 +3,19 @@ using System.Collections;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 
-public class BaseItem : MonoBehaviour{
+public class Item : MonoBehaviour, IDragHandler, IPointerUpHandler {
 	#region private vars
 	private int _itemId;
 	private string _itemName;
 	private string _itemDescr;
 	private int _itemValue;
+	private bool _stackable;
+	private bool _disengaged = false;				//Is sprite desingaged from slot for z-order?
+
+
 	private Sprite _itemInventorySprite;
 	private ItemType _itemType;
-	private bool _stackable;
+	private Transform _parentTransform;
 	#endregion
 
 	#region initialising
@@ -46,6 +50,12 @@ public class BaseItem : MonoBehaviour{
 		//Set UI background
 		gameObject.GetComponent<Image>().sprite = this._itemInventorySprite;
 
+		//Set EventTrigger
+		//EventTrigger trigger = gameObject.GetComponent<EventTrigger>();
+		//PointerEventData data = new PointerEventData(GameObject.Find ("EventSystem").GetComponent<EventSystem>());
+
+		//trigger.OnPointerDown(data);
+
 	}
 	
 	#endregion
@@ -72,6 +82,12 @@ public class BaseItem : MonoBehaviour{
 	public bool isStackable(){
 		return this._stackable;
 	}
+	public bool isDisengaged(){
+		return this._disengaged;
+	}
+	public Transform getParentTransform(){
+		return this._parentTransform;
+	}
 	#endregion
 
 	#region setter
@@ -93,15 +109,13 @@ public class BaseItem : MonoBehaviour{
 	public void setStackable(bool stackable){
 		this._stackable = stackable;
 	}
+	public void setParentTransform(Transform parentTransform){
+		this._parentTransform = parentTransform;
+		gameObject.transform.parent = parentTransform;
+	}
 	#endregion
 
 	#region methods
-	void OnMouseOver(){
-		Debug.Log("Hover over " + this._itemName + this._itemId);
-		gameObject.GetComponent<Image>().color = Color.cyan;
-	}
-
-
 	/// <summary>
 	/// Uses and/or consumes this Item. The outcome depends on the ItemType property of this item.  
 	/// </summary>
@@ -109,11 +123,62 @@ public class BaseItem : MonoBehaviour{
 	public bool use(){
 		return true;
 	}
+
+	/// <summary>
+	/// Disengages the Item Canvas Sprite from the Slot for top z-position.
+	/// </summary>
+	public void disengage(){
+		
+		if(this._disengaged)
+			return;
+		else
+			this._disengaged = true;
+
+		//Set new parent (topCanvas. This places the sprite on top and makes it dragable over the whole canvas)
+		gameObject.transform.parent = GameObject.Find ("InventoryCanvasContainer/Canvas").transform;
+
+		Debug.Log (GameObject.Find ("InventoryCanvasContainer/Canvas"));
+	}
+
+	/// <summary>
+	/// Engage the Item Canvas Sprite back to the slot.
+	/// </summary>
+	public void engage(){
+		if(!this._disengaged)
+			return;
+		else
+			this._disengaged = false;
+		
+		//Set new parent 
+		gameObject.transform.parent = this._parentTransform;
+		Debug.Log (this._parentTransform.position);
+
+	}
 	#endregion
 
 	#region drag functionality
-	public void drag(){
+	public virtual void OnDrag(PointerEventData eventData){
+		Debug.Log("Dragged");
+		disengage();
 
+		//Update Item Icon position
+		gameObject.transform.position = Input.mousePosition;
+	}
+
+	//Dropping
+	public virtual void OnPointerUp(PointerEventData eventData){
+		Debug.Log(eventData.pointerCurrentRaycast);
+		//Check if element is over a slot
+		//if(eventData.pointerCurrentRaycast){
+			//Debug.Log ("Over " + slot.name);
+		//}
+
+		if(this._disengaged){
+			Debug.Log ("Dropped");
+			engage();
+			//Update Item Icon position
+			gameObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(0.0f,0.0f);
+		}
 	}
 	#endregion
 
