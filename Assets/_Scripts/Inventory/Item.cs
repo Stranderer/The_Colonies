@@ -1,21 +1,23 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 
-public class Item : MonoBehaviour, IDragHandler, IPointerUpHandler {
+public class Item : MonoBehaviour, IDragHandler, IEndDragHandler {
 	#region private vars
-	private int _itemId;
-	private string _itemName;
-	private string _itemDescr;
-	private int _itemValue;
-	private bool _stackable;
+	public int _itemId;
+	public string _itemName;
+	public string _itemDescr;
+	public int _itemValue;
+	public bool _stackable;
 	private bool _disengaged = false;				//Is sprite desingaged from slot for z-order?
 
 
-	private Sprite _itemInventorySprite;
-	private ItemType _itemType;
+	public Sprite _itemInventorySprite;
+	public ItemType _itemType;
 	private Transform _parentTransform;
+	private GameObject _parentSlot;
 	#endregion
 
 	#region initialising
@@ -35,7 +37,7 @@ public class Item : MonoBehaviour, IDragHandler, IPointerUpHandler {
 		gameObject.AddComponent<RectTransform>();
 		gameObject.AddComponent<CanvasRenderer>();
 		gameObject.AddComponent<Image>();
-		gameObject.AddComponent<EventTrigger>();
+		//gameObject.AddComponent<EventTrigger>();
 
 		//Add Values to components
 		RectTransform rect = this.GetComponent<RectTransform>();
@@ -88,6 +90,9 @@ public class Item : MonoBehaviour, IDragHandler, IPointerUpHandler {
 	public Transform getParentTransform(){
 		return this._parentTransform;
 	}
+	public GameObject getSlot(){
+		return this._parentSlot;
+	}
 	#endregion
 
 	#region setter
@@ -113,6 +118,12 @@ public class Item : MonoBehaviour, IDragHandler, IPointerUpHandler {
 		this._parentTransform = parentTransform;
 		gameObject.transform.parent = parentTransform;
 	}
+	public void setSlot(GameObject newSlot){
+		this._parentSlot = newSlot;
+	}
+	public void clearSlot(){
+		this._parentSlot = null;
+	}
 	#endregion
 
 	#region methods
@@ -136,8 +147,6 @@ public class Item : MonoBehaviour, IDragHandler, IPointerUpHandler {
 
 		//Set new parent (topCanvas. This places the sprite on top and makes it dragable over the whole canvas)
 		gameObject.transform.parent = GameObject.Find ("InventoryCanvasContainer/Canvas").transform;
-
-		Debug.Log (GameObject.Find ("InventoryCanvasContainer/Canvas"));
 	}
 
 	/// <summary>
@@ -151,12 +160,11 @@ public class Item : MonoBehaviour, IDragHandler, IPointerUpHandler {
 		
 		//Set new parent 
 		gameObject.transform.parent = this._parentTransform;
-		Debug.Log (this._parentTransform.position);
-
 	}
 	#endregion
 
 	#region drag functionality
+	//Drag
 	public virtual void OnDrag(PointerEventData eventData){
 		Debug.Log("Dragged");
 		disengage();
@@ -166,8 +174,24 @@ public class Item : MonoBehaviour, IDragHandler, IPointerUpHandler {
 	}
 
 	//Dropping
-	public virtual void OnPointerUp(PointerEventData eventData){
-		Debug.Log(eventData.pointerCurrentRaycast);
+	public virtual void OnEndDrag(PointerEventData eventData){
+		Debug.Log("Dropped");
+
+		//Get EventSystem
+		EventSystem eventSystem = GameObject.Find("EventSystem").GetComponent<EventSystem>();
+		List<RaycastResult> rayCastResults = new List<RaycastResult>();
+		eventSystem.RaycastAll(eventData,rayCastResults);
+
+		//Check for a Slot and add or swap items if one is found
+		foreach(RaycastResult hit in rayCastResults){
+			Slot newSlot = hit.go.GetComponent<Slot>();
+			if(newSlot != null){
+				Debug.Log("Slot found!");
+				Debug.Log (newSlot);
+				newSlot.swapItems(this.getSlot());
+			}
+		}
+
 		//Check if element is over a slot
 		//if(eventData.pointerCurrentRaycast){
 			//Debug.Log ("Over " + slot.name);

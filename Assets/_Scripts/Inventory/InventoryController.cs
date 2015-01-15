@@ -126,7 +126,7 @@ public class InventoryController : MonoBehaviour {
 	/// <param name="items">Items to add</param>
 	public void addItem(List<GameObject> items){
 
-		//Search a free slot for each iten
+		//Search a free slot for each item
 		foreach(GameObject slot in _Slots){
 
 			if(items.Count == 0)
@@ -141,6 +141,43 @@ public class InventoryController : MonoBehaviour {
 			items.RemoveAt(0);
 		}
 
+		//Group stackables into one item
+		groupStackables();
+
+		//Update stackInfos
+		updateStackInfo();
+	}
+
+	public void groupStackables(){
+
+		GameObject stackableSlot = null;
+		foreach(GameObject slot in _Slots){
+
+			GameObject peekItem = slot.GetComponent<Slot>().peekItem();
+			if(peekItem == null || !peekItem.GetComponent<Item>().isStackable())
+				continue;
+
+			if(stackableSlot == null){
+				stackableSlot = slot;
+			} else {
+				//Encrease Stack and empty item
+				stackableSlot.GetComponent<Slot>().stackIncrease();
+				GameObject item = slot.GetComponent<Slot>().getItem();
+			    GameObject.Destroy(item);
+			}
+		}
+	}
+
+	public void updateStackInfo(){
+		foreach(GameObject slot in _Slots){
+			int stackValue = slot.GetComponent<Slot>().getItemCount();
+			Text stackInfoText = slot.transform.FindChild("StackInfo").GetComponent<Text>();
+			if(stackValue > 1){
+				stackInfoText.text = stackValue.ToString();
+			}else{
+				stackInfoText.text = "";
+			}
+		}
 	}
 
 	/// <summary>
@@ -383,12 +420,31 @@ public class InventoryController : MonoBehaviour {
 		newPanel.AddComponent<Image>();
 		newPanel.AddComponent<Slot>();
 
+		GameObject stackInfo = new GameObject("StackInfo");
+		stackInfo.transform.parent = newPanel.transform;
+		stackInfo.AddComponent<RectTransform>();
+		stackInfo.AddComponent<Text>();
+
 		//Add Values to components
 		RectTransform rect = newPanel.GetComponent<RectTransform>();
 
 		rect.anchorMin = new Vector2(0.0f, 1.0f);
 		rect.anchorMax = new Vector2(0.0f, 1.0f);
 		rect.pivot = new Vector2(0.0f, 1.0f);
+
+		//Config Stack info
+		RectTransform rectStackInfo = stackInfo.GetComponent<RectTransform>();
+		rectStackInfo.anchorMin = new Vector2(1.0f, 1.0f);
+		rectStackInfo.anchorMax = new Vector2(1.0f, 1.0f);
+		rectStackInfo.pivot = new Vector2(0.5f, 0.5f);
+		rectStackInfo.anchoredPosition = new Vector2(-18.0f, -10.0f);
+		//Font
+		stackInfo.GetComponent<RectTransform>().sizeDelta = new Vector2(30,22);
+		Font infoFont = (Font)Resources.Load("Fonts/arial");
+		stackInfo.GetComponent<Text>().font = infoFont;
+		stackInfo.GetComponent<Text>().fontSize = 18;
+		stackInfo.GetComponent<Text>().alignment = TextAnchor.MiddleRight;
+		stackInfo.GetComponent<Text>().color = Color.black;
 
 		return newPanel;
 	}

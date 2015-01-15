@@ -16,12 +16,14 @@ public class InventoryTestMotor : MonoBehaviour {
 		//Create some test items
 		GameObject item;
 
-		ItemType[] types = new ItemType[2];
+		ItemType[] types = new ItemType[3];
 		types[0] = ItemType.Weapon;
 		types[1] = ItemType.Wearable;
-		string[] typeNames = new string[2];
+		types[2] = ItemType.Consumable;
+		string[] typeNames = new string[3];
 		typeNames[0] = "Schwert";
 		typeNames[1] = "Rüstung";
+		typeNames[2] = "Trank";
 		string[] typeDescr = new string[5];
 		typeDescr[0] = "Eine kurze Beschreibung.";
 		typeDescr[1] = "Eine normal lange Beschreibung mit einem Detail.";
@@ -32,11 +34,11 @@ public class InventoryTestMotor : MonoBehaviour {
 
 		for(int i = 0; i < Random.Range (1, 31); i++){
 
-			int randType = Random.Range(0,2);
+			int randType = Random.Range(0,3);
 
 			item = new GameObject("Item " + i);
 			item.AddComponent<Item>();
-			item.GetComponent<Item>().init(i, typeNames[randType], typeDescr[Random.Range(0,5)], Random.Range(50,251), _itemSprites[randType], types[randType], false);
+			item.GetComponent<Item>().init(i, typeNames[randType], typeDescr[Random.Range(0,5)], Random.Range(50,251), _itemSprites[randType], types[randType], (types[randType] == ItemType.Consumable)? true : false);
 			_BaseItems.Add(item);
 		}
 

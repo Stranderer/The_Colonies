@@ -6,6 +6,7 @@ using UnityEngine.EventSystems;
 public class Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler{
 	#region private vars
 	private int _slotId;
+	private int _itemCount = 0;
 	private string _slotName;
 	private Vector2 _slotStartPos;
 	private Vector2 _slotSizeDelta;
@@ -25,12 +26,18 @@ public class Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler{
 
 		resetSize();
 		resetPosition();
+
+		//Add stackcount info
+
 	}
 	#endregion
 
 	#region getter
 	public int getId(){
 		return this._slotId;
+	}
+	public int getItemCount(){
+		return this._itemCount;
 	}
 	public string getName(){
 		return this._slotName;
@@ -44,9 +51,27 @@ public class Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler{
 	/// </summary>
 	/// <returns>The item.</returns>
 	public GameObject getItem(){
-		GameObject item = this._occupyingItem;
-		this._occupyingItem = null;
+		this._itemCount--;
+
+		if(this._occupyingItem == null || this._itemCount < 1){
+			this._itemCount = 0;
+			this._occupyingItem = null;
+			return null;
+		}
+
+		GameObject item = this._occupyingItem;;
+
+		if(this._itemCount == 1){
+			item = this._occupyingItem;
+			this._occupyingItem = null;
+			item.GetComponent<Item>().clearSlot();
+		}
+
 		return item;
+	}
+
+	public GameObject peekItem(){
+		return this._occupyingItem;
 	}
 
 	public GameObject getUIPanel(){
@@ -58,6 +83,9 @@ public class Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler{
 	#region setters
 	public void setId(int id){
 		this._slotId = id;
+	}
+	public void setItemCount(int itemCount){
+		this._itemCount = itemCount;
 	}
 	public void setName(string name){
 		this._slotName = name;
@@ -72,17 +100,33 @@ public class Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler{
 			return false;
 
 		this._occupyingItem = newItem;
+		this._itemCount++;
 		//Set parent of item gameobject
 		this._occupyingItem.GetComponent<Item>().setParentTransform(transform);
 		this._occupyingItem.GetComponent<Item>().setUIPosition(new Vector2(0,0));
 		this._occupyingItem.GetComponent<Item>().setUISize(new Vector2(this._slotSizeDelta.x -10.0f, this._slotSizeDelta.y - 10.0f));
+
+		//Set parentSlot
+		this._occupyingItem.GetComponent<Item>().setSlot(gameObject);
 
 		return true;
 	}
 	#endregion
 
 	#region methods
-	
+	public void stackIncrease(){
+		if(this.isFree())
+			return;
+
+		this._itemCount++;
+	}
+	public void stackDecrease(){
+		if(this.isFree())
+			return;
+
+		this._itemCount--;
+	}
+
 	void IPointerEnterHandler.OnPointerEnter(PointerEventData eventData){
 		highlight();
 		showStats();
@@ -117,6 +161,8 @@ public class Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler{
 		infoText += "Item Beschreibung: " + item.getDescription() + ln;
 		infoText += "Item Type: " + item.getType() + ln;
 		infoText += "Item isStackable: " + item.isStackable() + ln;
+		infoText += "Slot ID: " + this.getId() + ln;
+		infoText += "Slot stackSize: " + this.getItemCount() + ln;
 
 		panelText.text = infoText;
 
@@ -125,6 +171,27 @@ public class Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler{
 
 		//Show info
 		//_InfoPanel.SetActive(true);
+	}
+	/// <summary>
+	/// Swaps the item of this Slot with the Target slot or simply add the Item to the target if the target is empty.
+	/// </summary>
+	/// <param name="otherSlot">Target slot.</param>
+	public void swapItems(GameObject otherSlot){
+		if(otherSlot == null)
+			return;
+
+		Slot slot = otherSlot.GetComponent<Slot>();
+		GameObject thisItem = getItem();
+		GameObject otherItem = slot.getItem();
+
+		//add Item to other slot
+		if(thisItem != null){
+			slot.setItem(thisItem);
+		}
+
+		if(otherItem != null){
+			setItem(otherItem);
+		}
 	}
 
 	public void hideStats(){
