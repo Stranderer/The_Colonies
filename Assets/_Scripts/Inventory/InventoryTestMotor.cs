@@ -31,14 +31,25 @@ public class InventoryTestMotor : MonoBehaviour {
 		typeDescr[3] = "Eine lange Beschreibung mit vielen Details, welche alle genau und ausführlich beschreiben werden. Daher reicht hier ein einnzelner Satz nicht. So, dies sollte genug sein.";
 		typeDescr[4] = "Eine richtig lange und ausgedehnte Beschreibung mit extrem vielen Details, welche zu allem überfluss noch Zeilenummbrüche enthält." + System.Environment.NewLine + "Nach so einem Umbruch kann man noch lange weiter schreiben, aber ich lasse das jetz mal sein. Wäre ja auch ganz schön langweilig, so ein langer nichts sagender Text.";
 
+		int randCount = Random.Range (1, 20);
 
-		for(int i = 0; i < Random.Range (1, 31); i++){
+		for(int i = 0; i < randCount; i++){
 
-			int randType = Random.Range(0,3);
+			int randType = Random.Range(0,2);
 
 			item = new GameObject("Item " + i);
 			item.AddComponent<Item>();
 			item.GetComponent<Item>().init(i, typeNames[randType], typeDescr[Random.Range(0,5)], Random.Range(50,251), _itemSprites[randType], types[randType], (types[randType] == ItemType.Consumable)? true : false);
+			_BaseItems.Add(item);
+		}
+
+		for(int i = randCount; i < randCount+10; i++){
+			
+			int randType = 2;
+			
+			item = new GameObject("Item " + i);
+			item.AddComponent<Item>();
+			item.GetComponent<Item>().init(i, typeNames[randType], typeDescr[0], Random.Range(50,251), _itemSprites[randType], types[randType], (types[randType] == ItemType.Consumable)? true : false);
 			_BaseItems.Add(item);
 		}
 

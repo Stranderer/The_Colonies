@@ -1,18 +1,16 @@
 ﻿using UnityEngine;
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 
-public class Item : MonoBehaviour, IDragHandler, IEndDragHandler {
+public class Item : MonoBehaviour{
 	#region private vars
 	public int _itemId;
 	public string _itemName;
 	public string _itemDescr;
 	public int _itemValue;
-	public bool _stackable;
-	private bool _disengaged = false;				//Is sprite desingaged from slot for z-order?
-
+	public int _itemCount;
+	public bool _itemStackable;
 
 	public Sprite _itemInventorySprite;
 	public ItemType _itemType;
@@ -29,10 +27,11 @@ public class Item : MonoBehaviour, IDragHandler, IEndDragHandler {
 		this._itemValue = _itemValue;
 		this._itemInventorySprite = _itemSprite;
 		this._itemType = _itemType;
-		this._stackable = _stackable;
+		this._itemCount = 1;
+		this._itemStackable = _stackable;
 
 
-		transform.parent = transform;
+		//transform.parent = transform;
 		//Add nessesary components
 		gameObject.AddComponent<RectTransform>();
 		gameObject.AddComponent<CanvasRenderer>();
@@ -75,6 +74,9 @@ public class Item : MonoBehaviour, IDragHandler, IEndDragHandler {
 	public int getValue(){
 		return this._itemValue;
 	}
+	public int getCount(){
+		return this._itemCount;
+	}
 	public ItemType getType(){
 		return this._itemType;
 	}
@@ -82,10 +84,7 @@ public class Item : MonoBehaviour, IDragHandler, IEndDragHandler {
 		return this._itemInventorySprite;
 	}
 	public bool isStackable(){
-		return this._stackable;
-	}
-	public bool isDisengaged(){
-		return this._disengaged;
+		return this._itemStackable;
 	}
 	public Transform getParentTransform(){
 		return this._parentTransform;
@@ -108,11 +107,14 @@ public class Item : MonoBehaviour, IDragHandler, IEndDragHandler {
 	public void setValue(int value){
 		this._itemValue = value;
 	}
+	public void setCount(int count){
+		this._itemCount = count;
+	}
 	public void setType(ItemType itemType){
 		this._itemType = itemType;
 	}
 	public void setStackable(bool stackable){
-		this._stackable = stackable;
+		this._itemStackable = stackable;
 	}
 	public void setParentTransform(Transform parentTransform){
 		this._parentTransform = parentTransform;
@@ -130,79 +132,36 @@ public class Item : MonoBehaviour, IDragHandler, IEndDragHandler {
 	/// <summary>
 	/// Uses and/or consumes this Item. The outcome depends on the ItemType property of this item.  
 	/// </summary>
-	/// <returns>Returns true if item is used or consumed, false if not. (cannot be used or consumed)<c/returns>
+	/// <returns>Returns true if item is used or consumed, false if not. (cannot be used or consumed)</returns>
 	public bool use(){
 		return true;
 	}
 
-	/// <summary>
-	/// Disengages the Item Canvas Sprite from the Slot for top z-position.
-	/// </summary>
-	public void disengage(){
-		
-		if(this._disengaged)
-			return;
-		else
-			this._disengaged = true;
+	public void increaseCount(){
+		this._itemCount++;
+	}
 
-		//Set new parent (topCanvas. This places the sprite on top and makes it dragable over the whole canvas)
-		gameObject.transform.parent = GameObject.Find ("InventoryCanvasContainer/Canvas").transform;
+	public void decreaseCount(){
+		this._itemCount--;
 	}
 
 	/// <summary>
-	/// Engage the Item Canvas Sprite back to the slot.
+	/// Compares to other item.
 	/// </summary>
-	public void engage(){
-		if(!this._disengaged)
-			return;
-		else
-			this._disengaged = false;
-		
-		//Set new parent 
-		gameObject.transform.parent = this._parentTransform;
-	}
-	#endregion
+	/// <returns><c>true</c>,if both items are the same, <c>false</c> otherwise.</returns>
+	/// <param name="otherItem">Other item.</param>
+	public bool compareToOther(Item otherItem){
+		Debug.Log("compareToOther()");
 
-	#region drag functionality
-	//Drag
-	public virtual void OnDrag(PointerEventData eventData){
-		Debug.Log("Dragged");
-		disengage();
+		bool isSame = false;
 
-		//Update Item Icon position
-		gameObject.transform.position = Input.mousePosition;
-	}
+		if(otherItem == null)
+			return isSame;
 
-	//Dropping
-	public virtual void OnEndDrag(PointerEventData eventData){
-		Debug.Log("Dropped");
+		if(this.getName() == otherItem.getName() && this.getType() == otherItem.getType() && this.isStackable())
+			isSame = true;
 
-		//Get EventSystem
-		EventSystem eventSystem = GameObject.Find("EventSystem").GetComponent<EventSystem>();
-		List<RaycastResult> rayCastResults = new List<RaycastResult>();
-		eventSystem.RaycastAll(eventData,rayCastResults);
-
-		//Check for a Slot and add or swap items if one is found
-		foreach(RaycastResult hit in rayCastResults){
-			Slot newSlot = hit.go.GetComponent<Slot>();
-			if(newSlot != null){
-				Debug.Log("Slot found!");
-				Debug.Log (newSlot);
-				newSlot.swapItems(this.getSlot());
-			}
-		}
-
-		//Check if element is over a slot
-		//if(eventData.pointerCurrentRaycast){
-			//Debug.Log ("Over " + slot.name);
-		//}
-
-		if(this._disengaged){
-			Debug.Log ("Dropped");
-			engage();
-			//Update Item Icon position
-			gameObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(0.0f,0.0f);
-		}
+		return isSame;
 	}
 	#endregion
 

@@ -100,7 +100,6 @@ public class InventoryController : MonoBehaviour {
 				//GameObject newTile = (GameObject)Instantiate(this.slotPrefapp, new Vector3(0,0,0), Quaternion.identity);
 
 				GameObject newTile = createSlot();
-
 				newTile.GetComponent<Slot>().init(counter++, "Slot " + counter, startPos, slotSize, _InfoPanel);
                 newTile.GetComponent<Slot>().GetComponent<Image>().sprite = this.slotBackground;
 				this._Slots.Add(newTile);
@@ -118,7 +117,9 @@ public class InventoryController : MonoBehaviour {
 	/// </summary>
 	/// <param name="item">Item to add</param>
 	public void addItem(GameObject item){
-
+		List<GameObject> items = new List<GameObject>();
+		items.Add(item);
+		this.addItem(items);
 	}
 	/// <summary>
 	/// Adds multible Items to inventory.
@@ -142,7 +143,7 @@ public class InventoryController : MonoBehaviour {
 		}
 
 		//Group stackables into one item
-		groupStackables();
+		//groupStackables();
 
 		//Update stackInfos
 		updateStackInfo();
@@ -154,8 +155,10 @@ public class InventoryController : MonoBehaviour {
 		foreach(GameObject slot in _Slots){
 
 			GameObject peekItem = slot.GetComponent<Slot>().peekItem();
-			if(peekItem == null || !peekItem.GetComponent<Item>().isStackable())
+			if(peekItem == null || !peekItem.GetComponent<Item>().isStackable()){
 				continue;
+			}
+				
 
 			if(stackableSlot == null){
 				stackableSlot = slot;
@@ -170,13 +173,7 @@ public class InventoryController : MonoBehaviour {
 
 	public void updateStackInfo(){
 		foreach(GameObject slot in _Slots){
-			int stackValue = slot.GetComponent<Slot>().getItemCount();
-			Text stackInfoText = slot.transform.FindChild("StackInfo").GetComponent<Text>();
-			if(stackValue > 1){
-				stackInfoText.text = stackValue.ToString();
-			}else{
-				stackInfoText.text = "";
-			}
+			slot.GetComponent<Slot>().updateStackInfo();
 		}
 	}
 
@@ -420,8 +417,14 @@ public class InventoryController : MonoBehaviour {
 		newPanel.AddComponent<Image>();
 		newPanel.AddComponent<Slot>();
 
+		//Add container for stackInfo and ItemSprite
+		GameObject spriteContainer = new GameObject("SpriteContainer");
+		spriteContainer.transform.parent = newPanel.transform;
+		spriteContainer.AddComponent<RectTransform>();
+
+
 		GameObject stackInfo = new GameObject("StackInfo");
-		stackInfo.transform.parent = newPanel.transform;
+		stackInfo.transform.parent = spriteContainer.transform;
 		stackInfo.AddComponent<RectTransform>();
 		stackInfo.AddComponent<Text>();
 
@@ -431,6 +434,14 @@ public class InventoryController : MonoBehaviour {
 		rect.anchorMin = new Vector2(0.0f, 1.0f);
 		rect.anchorMax = new Vector2(0.0f, 1.0f);
 		rect.pivot = new Vector2(0.0f, 1.0f);
+
+		//Config Container
+		RectTransform rectSpriteContainer = spriteContainer.GetComponent<RectTransform>();
+		rectSpriteContainer.anchorMin = new Vector2(0.5f, 0.5f);
+		rectSpriteContainer.anchorMax = new Vector2(0.5f, 0.5f);
+		rectSpriteContainer.pivot = new Vector2(0.5f, 0.5f);
+		rectSpriteContainer.sizeDelta = slotSize;
+		rectSpriteContainer.anchoredPosition = new Vector2(0.0f, 0.0f);
 
 		//Config Stack info
 		RectTransform rectStackInfo = stackInfo.GetComponent<RectTransform>();
