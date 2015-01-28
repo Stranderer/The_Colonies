@@ -111,14 +111,21 @@ public class Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, ID
 		if(this.isFree())
 			return;
 
-		this._spriteContainer.parent = GameObject.Find ("InventoryCanvasContainer/Canvas").transform;
+		if(this._spriteContainer.parent == transform)
+			this._spriteContainer.parent = GameObject.Find ("InventoryCanvasContainer/Canvas").transform;
+
+
 		//Update Item Icon position
 		this._spriteContainer.position = Input.mousePosition;
+
 	}
 	
 	//Dropping
 	public virtual void OnEndDrag(PointerEventData eventData){
 		Debug.Log("Dropped");
+
+		//Indicates if allready dropped
+		bool dropped = false;
 
 		//Check if this slot is occupied
 		if(this.isFree())
@@ -128,15 +135,15 @@ public class Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, ID
 		EventSystem eventSystem = GameObject.Find("EventSystem").GetComponent<EventSystem>();
 		List<RaycastResult> rayCastResults = new List<RaycastResult>();
 		eventSystem.RaycastAll(eventData,rayCastResults);
-		
+
+
+		foreach(RaycastResult hit in rayCastResults)
+			Debug.Log(hit.go);
+
 		//Check for a Slot and add or swap items if one is found
 		foreach(RaycastResult hit in rayCastResults){
 			Slot newSlot = hit.go.GetComponent<Slot>();
 			if(newSlot != null){
-				Debug.Log("Slot found!");
-				Debug.Log (newSlot);
-
-
 				//Add Item if its the same
 				if(newSlot.peekItem() != null && peekItem().GetComponent<Item>().compareToOther(newSlot.peekItem().GetComponent<Item>())){
 					newSlot.peekItem().GetComponent<Item>().setCount(newSlot.peekItem().GetComponent<Item>().getCount() + peekItem().GetComponent<Item>().getCount());
@@ -145,15 +152,22 @@ public class Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, ID
 				}else{
 					this.swapItems(newSlot.gameObject);
 				}
-
 				updateStackInfo();
 				newSlot.updateStackInfo();
+
+				dropped = true;
 
 				break;
 			}
 		}
 
+		//Check if dropped, if not, create worldspace object
+		if(!dropped){
+			this._occupyingItem.GetComponent<Item>().createWorldSpaceInstance();
+		}
+
 		if(this._spriteContainer != null){
+			this._spriteContainer.position = this._slotStartPos;
 			this._spriteContainer.transform.parent = transform;
 			this._spriteContainer.anchoredPosition = new Vector2(0.0f,0.0f);
 		}
@@ -161,6 +175,7 @@ public class Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, ID
 	#endregion
 
 	#region methods
+
 	public void stackIncrease(){
 		if(this.isFree())
 			return;
@@ -190,19 +205,19 @@ public class Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, ID
 		}
 	}
 
+
 	void IPointerEnterHandler.OnPointerEnter(PointerEventData eventData){
-		GetComponent<Image>().color = new Color32(170,170,170,200);
+		//Debug.Log (this._slotName + " ENTER");
+		//gameObject.GetComponent<Image>().color = new Color32(200,200,200,150);
 		showStats();
 	}
+
 	void IPointerExitHandler.OnPointerExit(PointerEventData eventData){
-		Debug.Log("PointerExit");
-		Debug.Log(this);
-		Debug.Log (gameObject.GetComponent<Image>().color);
-		gameObject.GetComponent<Image>().color = new Color32(255,255,255,255);
-		Debug.Log (gameObject.GetComponent<Image>().color);
+		//Debug.Log (this._slotName + " EXIT");
+		//gameObject.GetComponent<Image>().color = Color.white;
 		hideStats();
 	}
-
+	
 	public void showStats(){
 		if(this.isFree())
 			return;

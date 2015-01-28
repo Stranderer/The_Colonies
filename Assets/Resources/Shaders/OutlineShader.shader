@@ -1,7 +1,7 @@
-﻿Shader "Custom/Diffuse Outline Shader" {
+﻿Shader "Custom/OutlineShader" {
 	Properties {
-		_OutlineColor ("Outline Color", Color) = (0,0,0,1)
-		_Outline ("Outline width", Range (0.0, 0.05)) = .005
+		_OutlineColor ("Outline Color", Color) = (0,0,0,0)
+		_Outline ("Outline width", Range (0.0, 0.05)) = .02
 	}
  
 CGINCLUDE

@@ -39,7 +39,7 @@ public class InventoryTestMotor : MonoBehaviour {
 
 			item = new GameObject("Item " + i);
 			item.AddComponent<Item>();
-			item.GetComponent<Item>().init(i, typeNames[randType], typeDescr[Random.Range(0,5)], Random.Range(50,251), _itemSprites[randType], types[randType], (types[randType] == ItemType.Consumable)? true : false);
+			item.GetComponent<Item>().init(false, i, typeNames[randType], typeDescr[Random.Range(0,5)], Random.Range(50,251), _itemSprites[randType], types[randType], (types[randType] == ItemType.Consumable)? true : false);
 			_BaseItems.Add(item);
 		}
 
@@ -49,7 +49,7 @@ public class InventoryTestMotor : MonoBehaviour {
 			
 			item = new GameObject("Item " + i);
 			item.AddComponent<Item>();
-			item.GetComponent<Item>().init(i, typeNames[randType], typeDescr[0], Random.Range(50,251), _itemSprites[randType], types[randType], (types[randType] == ItemType.Consumable)? true : false);
+			item.GetComponent<Item>().init(false, i, typeNames[randType], typeDescr[0], Random.Range(50,251), _itemSprites[randType], types[randType], (types[randType] == ItemType.Consumable)? true : false);
 			_BaseItems.Add(item);
 		}
 

@@ -93,7 +93,7 @@ public class InventoryController : MonoBehaviour {
 	private void initializeSlotGrid(){
 		//Build from top left to bootom right
 		int counter = 0;
-		Vector2 startPos = new Vector2(slotMarginX,-slotMarginY);
+		Vector2 startPos = new Vector2(slotMarginX,0);
 		for(int y = 0; y < this.slotsY; y++){
 			for(int x = 0; x < this.slotsX; x++){
 				//Instanciate a new tile
@@ -143,7 +143,7 @@ public class InventoryController : MonoBehaviour {
 		}
 
 		//Group stackables into one item
-		//groupStackables();
+		groupStackables();
 
 		//Update stackInfos
 		updateStackInfo();
@@ -165,6 +165,7 @@ public class InventoryController : MonoBehaviour {
 			} else {
 				//Encrease Stack and empty item
 				stackableSlot.GetComponent<Slot>().stackIncrease();
+				//slot.GetComponent<Slot>().stackDecrease();
 				GameObject item = slot.GetComponent<Slot>().getItem();
 			    GameObject.Destroy(item);
 			}
@@ -181,7 +182,7 @@ public class InventoryController : MonoBehaviour {
 	/// Debug this instance.
 	/// </summary>
 	public void debug(){
-		Debug.Log("This Inventory has a Grid of " + this.slotsX + " by " + this.slotsY + ". A total of " + this._Slots.Count + " Slots");
+		Debug.Log("This Inventory has a Grid of " + this.slotsX + " by " + this.slotsY + ". A total of " + this._Slots.Count + " Slots." + System.Environment.NewLine + " The Inventory window is " + this._CanvasContainer.transform.Find ("Canvas/InventoryBackground").GetComponent<RectTransform>().rect.height + " px.");
 	}
 	#endregion
 
@@ -260,7 +261,7 @@ public class InventoryController : MonoBehaviour {
 
 		//Create Info panel
 		this._InfoPanel = new GameObject("InfoPanel");
-		this._InfoPanel.transform.parent = this._Canvas.transform;
+		this._InfoPanel.transform.parent = background.transform;
 		this._InfoPanel.layer = 5;
 		this._InfoPanel.AddComponent<RectTransform>();
 		this._InfoPanel.AddComponent<TextResizer>();
@@ -276,18 +277,19 @@ public class InventoryController : MonoBehaviour {
 		//Configure Background
 		background.GetComponent<Image>().sprite = this.inventoryBackground;
 		//Position x-Right / y-Center of screen
-		background.GetComponent<RectTransform>().anchorMin = new Vector2(1f,0.5f);
-		background.GetComponent<RectTransform>().anchorMax = new Vector2(1f,0.5f);
+		background.GetComponent<RectTransform>().anchorMin = new Vector2(1f,1f);
+		background.GetComponent<RectTransform>().anchorMax = new Vector2(1f,1f);
+		background.GetComponent<RectTransform>().pivot = new Vector2(1f,0.5f);
 		//Calculate background size
 		background.GetComponent<RectTransform>().sizeDelta = calculateInventoryCanvasSize();
-		//Move 200px to left
-		background.GetComponent<RectTransform>().anchoredPosition = new Vector2(-1 * ((background.GetComponent<RectTransform>().sizeDelta.x / 2) + 20), 0);
+		background.GetComponent<RectTransform>().anchoredPosition = new Vector2(-10 , (-1) * (background.GetComponent<RectTransform>().sizeDelta.y + 20) / 2);
 
 		//Configure SlotContent
-		slotContent.GetComponent<RectTransform>().sizeDelta = new Vector2(
-			this._Canvas.transform.Find("InventoryBackground").GetComponent<RectTransform>().sizeDelta.x - 20,
-			this._Canvas.transform.Find("InventoryBackground").GetComponent<RectTransform>().sizeDelta.y - 20
-		);
+		slotContent.GetComponent<RectTransform>().anchorMin = new Vector2(0f,1f);
+		slotContent.GetComponent<RectTransform>().anchorMax = new Vector2(1f,1f);
+		slotContent.GetComponent<RectTransform>().sizeDelta = new Vector2(0, (background.GetComponent<RectTransform>().sizeDelta.y / 2) - 20);
+		slotContent.GetComponent<RectTransform>().anchoredPosition = new Vector2(0 , (-1) * ((background.GetComponent<RectTransform>().sizeDelta.y /  2) + 20) / 2);
+		slotContent.GetComponent<Image>().color = new Color32(255,255,255,5);
 
 		//Configure ScrollRect
 		slotContent.GetComponent<ScrollRect>().horizontal = false;
@@ -298,25 +300,28 @@ public class InventoryController : MonoBehaviour {
 		//Configure ScrollContent
 		scrollContent.GetComponent<Image>().color = new Color(0.1f,0.1f,0.1f,0.5f);
 		scrollContent.GetComponent<RectTransform>().sizeDelta = new Vector2(
-			this._Canvas.transform.Find("InventoryBackground").GetComponent<RectTransform>().sizeDelta.x - 20,
-			600.0f
+			background.GetComponent<RectTransform>().sizeDelta.x - 20,
+			calcualteScrollContentSize()
 		);
 		scrollContent.GetComponent<RectTransform>().anchorMin = new Vector2(0.5f,1.0f);
 		scrollContent.GetComponent<RectTransform>().anchorMax = new Vector2(0.5f,1.0f);
 		scrollContent.GetComponent<RectTransform>().pivot = new Vector2(0.5f, 1.0f);
 		scrollContent.GetComponent<RectTransform>().anchoredPosition = new Vector2(0.0f, 0.0f);
+		scrollContent.GetComponent<Image>().color = new Color32(0,0,0,0);
 
 		//Configure InfoPanel
 		RectTransform backgroundRect = background.GetComponent<RectTransform>();
 		this._InfoPanel.GetComponent<Image>().sprite = this.inventoryBackground;
-		this._InfoPanel.GetComponent<RectTransform>().anchorMin = new Vector2(1f,0.5f);
-		this._InfoPanel.GetComponent<RectTransform>().anchorMax = new Vector2(1f,0.5f);
-		this._InfoPanel.GetComponent<RectTransform>().sizeDelta = new Vector2(backgroundRect.sizeDelta.x, backgroundRect.sizeDelta.y / 3);
-		this._InfoPanel.GetComponent<RectTransform>().anchoredPosition = new Vector2(backgroundRect.anchoredPosition.x - backgroundRect.sizeDelta.x, backgroundRect.anchoredPosition.y + (backgroundRect.anchoredPosition.y - this._InfoPanel.GetComponent<RectTransform>().sizeDelta.y));
+		this._InfoPanel.GetComponent<RectTransform>().anchorMin = new Vector2(0f,1f);
+		this._InfoPanel.GetComponent<RectTransform>().anchorMax = new Vector2(1f,1f);
+		this._InfoPanel.GetComponent<RectTransform>().sizeDelta = new Vector2(0, (background.GetComponent<RectTransform>().sizeDelta.y / 2));
+		this._InfoPanel.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, (-1) * ((background.GetComponent<RectTransform>().sizeDelta.y /  2) + (this._InfoPanel.GetComponent<RectTransform>().sizeDelta.y / 2)));
 		//this._InfoPanel.SetActive(false); //hide per default
 
 		//Configure InfoPanelText
-		InfoPanelText.GetComponent<RectTransform>().sizeDelta = new Vector2(this._InfoPanel.GetComponent<RectTransform>().sizeDelta.x - 40, this._InfoPanel.GetComponent<RectTransform>().sizeDelta.y - 40);
+		InfoPanelText.GetComponent<RectTransform>().anchorMin = new Vector2(0f,0f);
+		InfoPanelText.GetComponent<RectTransform>().anchorMax = new Vector2(1f,1f);
+		InfoPanelText.GetComponent<RectTransform>().sizeDelta = new Vector2(-40, -40);
 		Font infoFont = (Font)Resources.Load("Fonts/arial");
 		if(infoFont == null){
 			Debug.Log("Font not found!");
@@ -421,7 +426,7 @@ public class InventoryController : MonoBehaviour {
 		GameObject spriteContainer = new GameObject("SpriteContainer");
 		spriteContainer.transform.parent = newPanel.transform;
 		spriteContainer.AddComponent<RectTransform>();
-
+		spriteContainer.AddComponent<Image>();
 
 		GameObject stackInfo = new GameObject("StackInfo");
 		stackInfo.transform.parent = spriteContainer.transform;
@@ -442,6 +447,7 @@ public class InventoryController : MonoBehaviour {
 		rectSpriteContainer.pivot = new Vector2(0.5f, 0.5f);
 		rectSpriteContainer.sizeDelta = slotSize;
 		rectSpriteContainer.anchoredPosition = new Vector2(0.0f, 0.0f);
+		spriteContainer.GetComponent<Image>().color = new Color32(0,0,0,0);
 
 		//Config Stack info
 		RectTransform rectStackInfo = stackInfo.GetComponent<RectTransform>();
@@ -470,11 +476,17 @@ public class InventoryController : MonoBehaviour {
 		//X
 		rectDelta.x = slotMarginX * (slotsX + 1) + slotSize.x * slotsX + 20;
 		//Y
-		rectDelta.y = slotMarginY * (slotsY + 1) + slotSize.y * slotsY;
+		rectDelta.y = Screen.height - 20;
 
 		Debug.Log(rectDelta);
 
 		return rectDelta;
+	}
+
+	public float calcualteScrollContentSize(){
+		float height = 0;
+		height = slotsY * (slotSize.y + slotMarginY) + slotMarginY;
+		return height;
 	}
 
 	private void updateCanvas(){

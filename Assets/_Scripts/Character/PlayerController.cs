@@ -2,13 +2,20 @@
 using System.Collections;
 using UnityEngine.UI;
 
-public class CharacterController : MonoBehaviour {
+public class PlayerController : MonoBehaviour {
 
 	public Text infoText;
+	public GameObject lastHit = null;
+
+	private Shader shaderNormal;
+	private Shader shaderOutline;
 
 	// Use this for initialization
 	void Start () {
 		infoText = GameObject.Find("GUICanvas/ActionInfo").GetComponent<Text>();
+		shaderNormal = Shader.Find( "Custom/DiffuseRimShader" );
+		shaderOutline = Shader.Find( "Custom/OutlineShader" );
+
 		Debug.Log(infoText);
 	}
 	
@@ -35,27 +42,37 @@ public class CharacterController : MonoBehaviour {
 		if (Physics.Raycast(transform.FindChild("Main Camera").transform.position, fwd, out hit, 5)){
 			//Show info if Takeable
 			if(hit.collider.GetComponent<Item>() != null){
+
+				lastHit = hit.collider.gameObject;
+
 				infoText.text = "Take \"" + hit.collider.GetComponent<Item>().getName() + "\"";
 				infoText.color = new Color(240,240,240, 0.7f);
-			}
 
-			//Add item to inventory
-			if(Input.GetKeyDown(KeyCode.F)){
-				//Create new gui item
-				Item worldItem = hit.collider.gameObject.GetComponent<Item>();
+				lastHit.renderer.materials[1].shader = shaderOutline;
 
-				GameObject pickupItem = new GameObject();
-				pickupItem.AddComponent<Item>();
+				//Add item to inventory
+				if(Input.GetKeyDown(KeyCode.F)){
+					//Create new gui item
+					Item worldItem = hit.collider.gameObject.GetComponent<Item>();
 
-				pickupItem.GetComponent<Item>().init(worldItem.getId(), worldItem.getName(), worldItem.getDescription(), worldItem.getValue(), worldItem.getTexture(), worldItem.getType(), worldItem.isStackable());
+					GameObject pickupItem = new GameObject();
+					pickupItem.AddComponent<Item>();
 
-				gameObject.GetComponent<InventoryController>().addItem(pickupItem);
+					pickupItem.GetComponent<Item>().init(false, worldItem.getId(), worldItem.getName(), worldItem.getDescription(), worldItem.getValue(), worldItem.getTexture(), worldItem.getType(), worldItem.isStackable());
 
-				//Destroy world object
-				GameObject.Destroy(hit.collider.gameObject);
+					gameObject.GetComponent<InventoryController>().addItem(pickupItem);
+
+					//Destroy world object
+					GameObject.Destroy(hit.collider.gameObject);
+				}
 			}
 		}else{
 			infoText.color = new Color(255, 255, 255, 0);
+
+			if(lastHit != null){
+				lastHit.renderer.materials[1].shader = shaderNormal;
+				lastHit = null;
+			}
 		}
 	}
 }
